@@ -35,7 +35,7 @@ or
 
 Note that profile is being set to `local`, this tells spring to leverage `src/main/resources/application-local.properties` which allows you to easily change system settings for your local run. See **Properties and Environment Variables** for details.
 
-### 2b. Running the application using the Jar file
+### 3b. Running the application using the Jar file
 This is closer to how the application will run in a Docker Container or in production.
 
 - `cd target/`
