@@ -1,73 +1,83 @@
-# elrrdatasync
+# ELRR Datasync
+The Datasync component of ELRR is a periodic process which polls data sources (at this time just the [External Services](https://github.com/adlnet/elrr-external-services) proxy) to collect xAPI data and put it into a Kafka Topic for consumption and processing by ELRR.
 
-ELRR services which aid in the streaming (Kafka streams) of data from the staging database to the ELRR database.
-
-There are database and kafka dependencies, but there's a [repo with a docker-compose](https://github.com/US-ELRR/elrrdockercompose/) that resolves them locally.
-
-# Dependencies
-- [Java JDK 1.8](https://www.oracle.com/java/technologies/downloads/)
-- [git](https://git-scm.com/downloads)
+## Dev Requirements
+- [Java JDK 17](https://www.oracle.com/java/technologies/downloads/) or later
 - [Maven](https://maven.apache.org/)
-- [Docker](https://www.docker.com/products/docker-desktop/)
-- [PostgreSQL](https://www.postgresql.org/download/)
+- [PostgreSQL Database](https://www.postgresql.org/) (can install, or use [docker container](https://hub.docker.com/_/postgres/tags) version)
 
-# Tools
-- SQL client or Terminal
-- [Postman](https://www.postman.com/downloads/)
-- [Eclipse](https://www.eclipse.org/downloads/packages/) or other IDE
+## Tools
+- Database Client (can use postgres CLI, pgadmin, or a 3rd party client like [DBeaver](https://dbeaver.io/))
+- REST Client (such as [Postman](https://www.postman.com/downloads/))
+- [Docker](https://www.docker.com/products/docker-desktop/) if working with containers
 
-# Create Docker Containers
-- Start Docker Desktop
-- docker compose up
-- Check for new containers in Docker Desktop
-   
-# Create and populate PostgreSQL staging schema
-- Start Docker Desktop
-- Open SQL client
-- Run schema.sql 
+## Running the Application
 
-# Build the application
-- mvn clean install -Dmaven.test.skip=false
+### 1. Build the application
+`mvn clean install`
 
-# Deploying the application on Docker 
-The easiest way to deploy the sample application to Docker is to follow below steps:
-- mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
-- docker build --build-arg JAR_FILE="./target/elrrdatasync-0.0.1-SNAPSHOT.jar" --file Dockerfile -t <docker_hub>/test:elrrdatasync-dck-img .
-- docker run -p Port:Port -t <docker_hub>/test:elrrdatasync-dck-img
+This will test, compile, and create a jar for the app in `target/`
 
-# Running the application locally
-There are several ways to run a Spring Boot application on your local machine. One way is to execute the main method in the com.deloitte.elrr.datasync.DatasyncApplication class from your IDE
+### 2. Start and Configure the Database
 
-# Alternatively you can use the Spring Boot Maven plugin: 
-- [Run elrrexternalservices first](https://github.com/US-ELRR/elrrexternalservices)
-- mvn clean
-- mvn spring-boot:run -D"spring-boot.run.profiles"=local -e (Windows)
-- mvn spring-boot:run -D spring-boot.run.profiles=local -e  (Linux)
-- Ctrl+C to end --> Terminate batch job = Y
+You will need a running PostgreSQL database containing the schema in `dev-resources/PostgreSQL/schema.sql`.
 
-# Environment Variables
+You will also need to configure the app properties/ENV to point to that database (See **Properties and Environment Variables** below)
+
+One option is to use the ELRR [Local Development Docker Compose](https://github.com/adlnet/elrr-dockercompose) which runs all of the appropriate dependencies with the connection details already in `application-local.properties`, but it does not seed the database with schema, so you will still need to use a DB client to run `schema.sql` against the `sync-db` container's database.
+
+### 3a. Running the application using the Spring Boot Maven plugin: 
+This is the recommended and easiest way to run a local version of the application
+
+- `mvn spring-boot:run -D spring-boot.run.profiles=local -e`  (Linux/MacOS)
+or
+`mvn spring-boot:run -D"spring-boot.run.profiles"=local -e` (Windows)
+
+Note that profile is being set to `local`, this tells spring to leverage `src/main/resources/application-local.properties` which allows you to easily change system settings for your local run. See **Properties and Environment Variables** for details.
+
+### 3b. Running the application using the Jar file
+This is closer to how the application will run in a Docker Container or in production.
+
+- `cd target/`
+- `java -jar elrrdatasync-_.jar` (you must fill in the version number that matches the current target build)
+
+To configure launch for this method you will set ENV variables instead of tweaking `application-local` as the jar will default to `application.properties` which accepts ENV overrides.
+
+## Properties and Environment Variables
 Configuration variables for running the application
 
-## Required
-- PGHOST: PostgreSQL Server Host
-- PGPORT: PostgreSQL Server Port
-- PG_DATABASE: PostgreSQL Database Name
-- PG_RW_USER: PostgreSQL User
-- PG_RW_PASSWORD: PostgreSQL Password
+| Property | ENV Variable | Default | Description |
+| -------- | -------- | -------- | -------- |
+| prop  | PGHOST | - | PostgreSQL Server Host
+| prop  | PGPORT | - | PostgreSQL Server Port
+| prop  | PG_DATABASE | - | PostgreSQL Database Name
+| prop  | PG_RW_USER | - | PostgreSQL Username
+| prop  | PG_RW_PASSWORD | - | PostgreSQL Password
+| prop  | PG_SCHEMA | datasync_schema | Default PostgreSQL Schema
+| prop  | EXTERNAL_SERVICES_URL | http://elrr-external-services | URL of External Services installation
+| prop  | RUN_FREQUENCY | `0 0/1 * * * *` | Frequency to run sync process
+| prop  | AUDIT_PURGE_FREQUENCY | `0 */60 * * * *` | Frequency to purge cache
+| prop  | AUDIT_PURGE_RETENTION | 10 | How many days to retain in audit logs
+| prop  | BROKER_HOST | elrr-kafka | Kafka Broker Host
+| prop  | BROKER_PORT | 9092 | Kafka Broker Port
+| prop  | BROKER_TOPIC | datasync-statements | Kafka Topic
+| prop  | BROKER_DLQ | datasync-statements-dlq | Kafka Dead Letter Queue
+| prop  | BROKER_GROUPID | elrr-consumer-group | Kafka Group ID
+| prop  | BROKER_PARTITIONS | 6 | Kafka Partitions Count
+| prop  | BROKER_REPLICAS | 1 | Kafka Replicas Count
 
-## Optional (has defaults)
-- PG_SCHEMA: Default PostgreSQL Schema
-- EXTERNAL_SERVICES_URL: URL of External Services installation
-- RUN_FREQUENCY: Frequency to run sync process
-- AUDIT_PURGE_FREQUENCY: Frequency to purge cache
-- AUDIT_PURGE_RETENTION: How many days to retain in audit logs
-- BROKER_HOST: Kafka Broker Host
-- BROKER_PORT: Kafka Broker Port
-- BROKER_TOPIC: Kafka Topic
-- BROKER_DLQ: Kafka Dead Letter Queue
-- BROKER_GROUPID: Kafka Group ID
-- BROKER_PARTITIONS: Kafka Partitions Count
-- BROKER_REPLICAS: Kafka Replicas Count
+## Running Locally With Dependencies and Testing
 
-# Optional step 
-- docker push <docker_hub>/test:elrrdatasync-dck-img
+### System Dependencies
+
+#### External Services
+
+Datasync will periodically query a running [External Services](https://github.com/adlnet/elrr-external-services) for xAPI updates. You will need to clone and run External Services locally, using the instructions in that repo, before you can get Datasync running successfully.
+
+#### Other Dependencies
+
+Datasync also requires a PostgreSQL database with the appropriate schema, a running kafka, and configuration variables to match both of those resources in order to work. Cloning and running the [ELRR Local Docker Compose](https://github.com/adlnet/elrr-dockercompose) will provide a database and kafka already matching the current defaults in `application-local.properties`. If you start up this compose, and then run using Spring Boot as detailed above, you should have a running version.
+
+### Testing
+
+If you did the prior steps, you should be able to see in logs that every minute the Datasync process queries External Services/LRS for new data, and if there is some it puts the data onto the Kafka topic. If it is not adding anything, make sure the LRS contains data.
