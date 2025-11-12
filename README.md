@@ -48,23 +48,23 @@ Configuration variables for running the application
 
 | Property | ENV Variable | Default | Description |
 | -------- | -------- | -------- | -------- |
-| prop  | PGHOST | - | PostgreSQL Server Host
-| prop  | PGPORT | - | PostgreSQL Server Port
-| prop  | PG_DATABASE | - | PostgreSQL Database Name
-| prop  | PG_RW_USER | - | PostgreSQL Username
-| prop  | PG_RW_PASSWORD | - | PostgreSQL Password
-| prop  | PG_SCHEMA | datasync_schema | Default PostgreSQL Schema
-| prop  | EXTERNAL_SERVICES_URL | http://elrr-external-services | URL of External Services installation
-| prop  | RUN_FREQUENCY | `0 0/1 * * * *` | Frequency to run sync process
-| prop  | AUDIT_PURGE_FREQUENCY | `0 */60 * * * *` | Frequency to purge cache
-| prop  | AUDIT_PURGE_RETENTION | 10 | How many days to retain in audit logs
-| prop  | BROKER_HOST | elrr-kafka | Kafka Broker Host
-| prop  | BROKER_PORT | 9092 | Kafka Broker Port
-| prop  | BROKER_TOPIC | datasync-statements | Kafka Topic
-| prop  | BROKER_DLQ | datasync-statements-dlq | Kafka Dead Letter Queue
-| prop  | BROKER_GROUPID | elrr-consumer-group | Kafka Group ID
-| prop  | BROKER_PARTITIONS | 6 | Kafka Partitions Count
-| prop  | BROKER_REPLICAS | 1 | Kafka Replicas Count
+| spring.datasource.url (partly, jdbc url)  | PGHOST | - | PostgreSQL Server Host
+| spring.datasource.url (partly, jdbc url)  | PGPORT | - | PostgreSQL Server Port
+| spring.datasource.url (partly, jdbc url)  | PG_DATABASE | - | PostgreSQL Database Name
+| spring.datasource.username  | PG_RW_USER | - | PostgreSQL Username
+| spring.datasource.password  | PG_RW_PASSWORD | - | PostgreSQL Password
+| spring.jpa.properties.hibernate.default_schema  | PG_SCHEMA | datasync_schema | Default PostgreSQL Schema
+| lrsservice.url  | EXTERNAL_SERVICES_URL | http://elrr-external-services | URL of External Services installation
+| cronExpression  | RUN_FREQUENCY | `0 0/1 * * * *` | Frequency to run sync process
+| purgeCronExpression  | AUDIT_PURGE_FREQUENCY | `0 */60 * * * *` | Frequency to purge cache
+| purgeDays  | AUDIT_PURGE_RETENTION | 10 | How many days to retain in audit logs
+| brokerUrl (partly, combined with port)   | BROKER_HOST | elrr-kafka | Kafka Broker Host
+| brokerUrl (partly, combined with host)  | BROKER_PORT | 9092 | Kafka Broker Port
+| kafka.topic  | BROKER_TOPIC | datasync-statements | Kafka Topic
+| kafka.dead.letter.topic  | BROKER_DLQ | datasync-statements-dlq | Kafka Dead Letter Queue
+| kafka.groupId  | BROKER_GROUPID | elrr-consumer-group | Kafka Group ID
+| kafka.partitions  | BROKER_PARTITIONS | 6 | Kafka Partitions Count
+| kafka.replicas  | BROKER_REPLICAS | 1 | Kafka Replicas Count
 
 ## Running Locally With Dependencies and Testing
 
